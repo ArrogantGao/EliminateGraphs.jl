@@ -1,24 +1,123 @@
-function find_children(g::SimpleGraph, vertex_set::Vector{Int})
-    vertex_set = Set(vertex_set)
-    u_vertices = Set{Int}()
-    
-    for v in vcat([neighbors(g, u) for u in vertex_set]...)
-        neighbor = copy(neighbors(g, v))
-        count = 0
-        for n in neighbor
-            if n in vertex_set
-                count += 1
-            end
-        end
-        if count == 1
-            push!(u_vertices, v)
-        end
-    end
+"""
+    struct CountingMIS
 
-    return collect(u_vertices)
+A struct representing a counting maximum independent set (MIS), where `mis` for size of the maximum independent set and `count` for the count of branches.
+
+# Fields
+- `mis::Int`: The maximum independent set.
+- `count::Int`: The count of the maximum independent set.
+
+# Constructors
+- `CountingMIS(mis::Int)`: Constructs a CountingMIS object with the given maximum independent set and count set to 1.
+- `CountingMIS(mis::Int, count::Int)`: Constructs a CountingMIS object with the given maximum independent set and count.
+
+# Examples
+```jldoctest
+julia> CountingMIS(2, 2) + 2
+CountingMIS(4, 2)
+
+julia> CountingMIS(1, 1) + CountingMIS(2, 2)
+CountingMIS(3, 3)
+
+julia> max(CountingMIS(1, 1), CountingMIS(2, 2))
+CountingMIS(2, 3)
+```
+"""
+struct CountingMIS
+    mis::Int
+    count::Int
+    CountingMIS(mis::Int) = new(mis, 1)
+    CountingMIS(mis::Int, count::Int) = new(mis, count)
 end
 
+Base.:+(x::CountingMIS, y::Int) = CountingMIS(x.mis + y, x.count)
+Base.:+(x::Int, y::CountingMIS) = CountingMIS(x + y.mis, y.count)
+Base.:+(x::CountingMIS, y::CountingMIS) = CountingMIS(x.mis + y.mis, x.count + y.count)
 
+Base.max(x::CountingMIS, y::CountingMIS) = CountingMIS(max(x.mis, y.mis), x.count + y.count)
+Base.max(args...) = reduce(max, args)
+
+
+function remove_vertex(g, v)
+    g, vs = induced_subgraph(g, setdiff(vertices(g), v))
+    return g
+end
+
+function closed_neighbors(g::SimpleGraph, vertices::Vector{Int})
+    return open_neighbors(g, vertices) ∪ vertices
+end
+
+function open_neighbors(g::SimpleGraph, vertices::Vector{Int})
+    ov = Vector{Int}()
+    for v in vertices
+        for n in neighbors(g, v)
+            push!(ov, n)
+        end
+    end
+    return unique!(setdiff(ov, vertices))
+end
+
+function folding(g::SimpleGraph, v)
+    @assert degree(g, v) == 2
+    a, b = neighbors(g, v)
+    if !has_edge(g, a, b)
+        # apply the graph rewrite rule
+        add_vertex!(g)
+        nn = open_neighbors(g, [v, a, b])
+        for n in nn
+            add_edge!(g, nv(g), n)
+        end
+    end
+    return remove_vertex(g, [v, a, b])
+end
+
+function find_children(g::SimpleGraph, vertex_set::Vector{Int})
+    u_vertices = Int[]
+    
+    for v in open_neighbors(g, vertex_set)
+        length(intersect(neighbors(g, v), vertex_set)) == 1 && push!(u_vertices, v)
+    end
+
+    return u_vertices
+end
+
+function is_independent(g::SimpleGraph, vertex_set::Vector{Int})
+    for i in 1:length(vertex_set), j in i+1:length(vertex_set)
+        has_edge(g, vertex_set[i], vertex_set[j]) && return false
+    end
+    return true
+end
+
+function unconfined_vertices(g::SimpleGraph)
+    u_vertices = []
+    for v in 1:nv(g)
+        is_unconfined(g, [v]) && push!(u_vertices, v)
+    end
+    return u_vertices
+end
+
+function is_unconfined(g::SimpleGraph, S::Vector{Int})
+    N_S = closed_neighbors(g, S)
+    us = find_children(g, S)
+    isempty(us) && return false
+
+    ws = []
+    for u in us
+        w = setdiff(neighbors(g, u), N_S)
+        isempty(w) && return true
+        push!(ws, w)
+    end
+
+    (minimum(length.(ws)) ≥ 2) && return false
+
+    # all length(w) = 1
+    W = [w[1] for w in ws if length(w) == 1]
+    if is_independent(g, W)
+        return is_unconfined(g, unique(S ∪ W))
+    else
+        return true
+    end
+end
 
 function find_unconfined_vertices(g::SimpleGraph)
     unconfined_vertices = []

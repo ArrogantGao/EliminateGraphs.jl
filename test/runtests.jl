@@ -19,4 +19,5 @@ end
 
 @testset "xiao2013" begin
     include("algorithms/xiao2013.jl")
+    include("algorithms/xiao2013_utils.jl")
 end
