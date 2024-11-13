@@ -1,10 +1,9 @@
-using Pkg
-Pkg.activate("../..")
-using Test
-using Graphs
+
 using EliminateGraphs
+using Test
 using Random
 
+using EliminateGraphs: line_graph,find_unconfined_vertices,confined_set,twin_filter,short_funnel_filter,desk_filter,one_layer_effective_vertex_filter,funnel_filter,count_o_path,has_fine_structure,four_cycle_filter,vertex_filter
 
 @testset "line graph" begin
     edges = [(1,2),(1,4),(1,5),(2,3),(2,4),(2,5),(3,4),(3,5)]

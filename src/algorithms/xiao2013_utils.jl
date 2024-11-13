@@ -1,8 +1,3 @@
-using Combinatorics
-using Graphs
-export line_graph,find_unconfined_vertices,confined_set,twin_filter,short_funnel_filter,desk_filter,one_layer_effective_vertex_filter,funnel_filter,count_o_path,has_fine_structure,four_cycle_filter,vertex_filter
-
-
 function find_children(g::SimpleGraph, vertex_set::Vector{Int})
     vertex_set = Set(vertex_set)
     u_vertices = Set{Int}()

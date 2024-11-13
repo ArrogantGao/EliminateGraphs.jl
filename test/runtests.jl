@@ -16,3 +16,7 @@ end
 @testset "mis1" begin
     include("algorithms/algorithms.jl")
 end
+
+@testset "xiao2013" begin
+    include("algorithms/xiao2013.jl")
+end
