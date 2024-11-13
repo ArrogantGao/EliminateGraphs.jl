@@ -3,7 +3,7 @@ using Test
 
 using EliminateGraphs: line_graph,find_unconfined_vertices,confined_set,twin_filter,short_funnel_filter,desk_filter,one_layer_effective_vertex_filter,funnel_filter,count_o_path,has_fine_structure,four_cycle_filter,vertex_filter
 
-using EliminateGraphs: find_children
+using EliminateGraphs: find_children, unconfined_vertices
 
 @testset "find_children" begin
     function graph_from_edges(edges)
