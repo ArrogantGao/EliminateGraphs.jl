@@ -419,37 +419,6 @@ function optimal_four_cycle(g::SimpleGraph)
     return cycles_of_length_4[i]
 end
 
-# function optimal_vertex(g::SimpleGraph)
-#     vertices_with_degree_4 = filter(v -> degree(g, v) == 4, vertices(g))
-#     optimal_vertex = 0
-#     max_n2v_size = 0
-#     for v in vertices_with_degree_4
-#         N2v = unique(vcat(v,neighbors(g,v),vcat([neighbors(g,u) for u in neighbors(g,v)]...)))
-#         if length(N2v) > max_n2v_size
-#             max_n2v_size = length(N2v)
-#             optimal_vertex = v 
-#         end
-#     end
-#     if optimal_vertex != 0
-#         return optimal_vertex
-#     end
-#     vertices_with_degree_3 = filter(v -> degree(g, v) == 3, vertices(g))
-#     max_num_o_path = 0
-#     for v in vertices_with_degree_3
-#         g_left = copy(g)
-#         rem_vertices!(g_left, [v])
-#         num_o_path = count_o_path(g_left)
-#         if num_o_path > max_num_o_path
-#             max_num_o_path = num_o_path
-#             optimal_vertex = v 
-#         end
-#     end
-#     if optimal_vertex != 0
-#         return optimal_vertex
-#     end
-#     return nothing
-# end
-
 function N2v(g::SimpleGraph, v::Int)
     return closed_neighbors(g, closed_neighbors(g, [v]))
 end
