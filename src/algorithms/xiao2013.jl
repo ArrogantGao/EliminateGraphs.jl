@@ -3,11 +3,13 @@ export mis_xiao2013, count_xiao2013
 
 
 function mis_xiao2013(g::SimpleGraph)
-    return _xiao2013(g).mis
+    gc = copy(g)    
+    return _xiao2013(gc).mis
 end
 
 function count_xiao2013(g::SimpleGraph)
-    return _xiao2013(g).count
+    gc = copy(g)
+    return _xiao2013(gc).count
 end
 
 
@@ -32,43 +34,41 @@ function _xiao2013(g::SimpleGraph)
             return 1 + _xiao2013(folding(g, vmin))
         end
 
-        unconfined_vertices = find_unconfined_vertices(g)
-        if length(unconfined_vertices) != 0
-            rem_vertices!(g, [unconfined_vertices[1]])
+        # reduction rules
+
+        unconfined_vs = unconfined_vertices(g)
+        if length(unconfined_vs) != 0
+            rem_vertices!(g, [unconfined_vs[1]])
             return _xiao2013(g)
         end
 
-        g_new = twin_filter(g)
-        if g_new != g
-            return _xiao2013(g_new)+2
+        twin_filter!(g) && return _xiao2013(g) + 2
+        short_funnel_filter!(g) && return _xiao2013(g) + 1
+        desk_filter!(g) && return _xiao2013(g) + 2
+
+        # branching rules
+
+        ev = effective_vertex(g)
+        if !isnothing(ev)
+            a, S_a = ev
+            return max(_xiao2013(remove_vertices(g, closed_neighbors(g, S_a))) + length(S_a), _xiao2013(remove_vertices(g, [a])))
         end
 
-        filter_result = short_funnel_filter(g)
-        if filter_result[2] == 1
-            return _xiao2013(filter_result[1])+1
+        opt_funnel = optimal_funnel(g)
+        if !isnothing(opt_funnel)
+            a,b = opt_funnel
+            S_b = confined_set(g, [b])
+            return max(_xiao2013(remove_vertices(g, closed_neighbors(g, [a]))) + 1, _xiao2013(remove_vertices(g, closed_neighbors(g, S_b))) + length(S_b))
         end
 
-        g_new = desk_filter(g)
-        if g_new != g
-            return _xiao2013(g_new)+2
+        opt_quad = optimal_four_cycle(g)
+        if !isnothing(opt_quad)
+            a, b, c, d = opt_quad
+            return max(_xiao2013(remove_vertices(g, [a,c])), _xiao2013(remove_vertices(g, [b,d])))
         end
 
-        branches = one_layer_effective_vertex_filter(g)
-        if length(branches) == 2
-            return max(_xiao2013(branches[1][1])+branches[1][2], _xiao2013(branches[2][1])+branches[2][2])
-        end
-
-        branches = funnel_filter(g)
-        if length(branches) == 2
-            return max(_xiao2013(branches[1][1])+branches[1][2], _xiao2013(branches[2][1])+branches[2][2])
-        end
-
-        branches = four_cycle_filter(g)
-        if length(branches) == 2
-            return max(_xiao2013(branches[1][1])+branches[1][2], _xiao2013(branches[2][1])+branches[2][2])
-        end
-
-        branches = vertex_filter(g)
-        return max(_xiao2013(branches[1][1])+branches[1][2], _xiao2013(branches[2][1])+branches[2][2])
+        v = optimal_vertex(g)
+        S_v = confined_set(g, [v])
+        return max(_xiao2013(remove_vertices(g, closed_neighbors(g, S_v))) + length(S_v), _xiao2013(remove_vertices(g, [v])))
     end
 end
